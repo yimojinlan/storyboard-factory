@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>一抹金蓝 · 短剧分镜工厂</title>
+<title>一抹金蓝 · 短剧分镜工厂 v3</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 <style>
   :root {
     --bg: #0f0f1a;
@@ -17,6 +18,8 @@
     --gold: #f0c040;
     --success: #4ade80;
     --warn: #fbbf24;
+    --pink: #f472b6;
+    --cyan: #22d3ee;
     --radius: 12px;
     --shadow: 0 4px 20px rgba(0,0,0,0.3);
   }
@@ -28,7 +31,6 @@
     min-height: 100vh;
     line-height: 1.6;
   }
-  /* Nav */
   .nav {
     background: var(--card);
     border-bottom: 1px solid var(--border);
@@ -60,25 +62,24 @@
   }
   .btn-primary { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; }
   .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 15px rgba(79,140,255,0.3); }
+  .btn-success { background: linear-gradient(135deg, #059669, #10b981); color: #fff; }
+  .btn-success:hover { transform: translateY(-1px); box-shadow: 0 4px 15px rgba(5,150,105,0.3); }
+  .btn-warn { background: linear-gradient(135deg, #d97706, #f59e0b); color: #fff; }
+  .btn-warn:hover { transform: translateY(-1px); box-shadow: 0 4px 15px rgba(217,119,6,0.3); }
   .btn-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border); }
   .btn-ghost:hover { background: var(--card2); color: var(--text); }
   .btn-sm { padding: 5px 10px; font-size: 12px; }
-  .btn-icon { width: 36px; height: 36px; padding: 0; justify-content: center; border-radius: 8px; }
-  /* Layout */
-  .container { max-width: 960px; margin: 0 auto; padding: 24px 16px; }
-  /* Input Section */
-  .input-section {
+  .btn-xs { padding: 3px 8px; font-size: 11px; }
+  .container { max-width: 1100px; margin: 0 auto; padding: 24px 16px; }
+  .section-card {
     background: var(--card);
     border: 1px solid var(--border);
     border-radius: var(--radius);
     padding: 24px;
     margin-bottom: 20px;
   }
-  .input-section h2 {
-    font-size: 18px; margin-bottom: 16px;
-    display: flex; align-items: center; gap: 8px;
-  }
-  .input-section h2 small { font-size: 12px; color: var(--text2); font-weight: 400; }
+  .section-card h2 { font-size: 18px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+  .section-card h2 small { font-size: 12px; color: var(--text2); font-weight: 400; }
   textarea {
     width: 100%; min-height: 180px;
     background: var(--bg); color: var(--text);
@@ -89,10 +90,7 @@
   }
   textarea:focus { border-color: var(--accent); }
   textarea::placeholder { color: var(--text2); opacity: 0.5; }
-  .config-row {
-    display: flex; flex-wrap: wrap; gap: 12px;
-    margin: 16px 0; align-items: center;
-  }
+  .config-row { display: flex; flex-wrap: wrap; gap: 12px; margin: 16px 0; align-items: center; }
   .config-group { display: flex; flex-direction: column; gap: 4px; }
   .config-group label { font-size: 12px; color: var(--text2); }
   .config-group select, .config-group input {
@@ -101,62 +99,101 @@
     padding: 6px 10px; font-size: 13px; outline: none;
   }
   .config-group select:focus, .config-group input:focus { border-color: var(--accent); }
-  .char-counter {
-    text-align: right; font-size: 12px; color: var(--text2);
-    margin-top: 6px;
+  .char-counter { text-align: right; font-size: 12px; color: var(--text2); margin-top: 6px; }
+  .action-bar { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+  /* Upload */
+  .upload-zone {
+    border: 2px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 40px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-bottom: 16px;
   }
-  .action-bar {
-    display: flex; gap: 10px; margin-top: 16px;
-    flex-wrap: wrap;
+  .upload-zone:hover, .upload-zone.dragover { border-color: var(--accent); background: rgba(79,140,255,0.05); }
+  .upload-zone .icon { font-size: 40px; margin-bottom: 8px; }
+  .upload-zone .text { font-size: 14px; color: var(--text2); }
+  .upload-zone .sub { font-size: 12px; color: var(--text2); opacity: 0.6; margin-top: 4px; }
+  .upload-zone input[type="file"] { display: none; }
+  /* Episode tabs */
+  .episode-tabs {
+    display: flex; gap: 8px; flex-wrap: wrap;
+    margin: 16px 0; padding: 12px 0;
+    border-bottom: 1px solid var(--border);
   }
-  /* Loading */
-  .loading-bar {
-    height: 3px; background: var(--border); border-radius: 2px;
-    overflow: hidden; margin: 8px 0; display: none;
+  .episode-tab {
+    padding: 8px 16px; border-radius: 8px;
+    background: var(--card2); color: var(--text2);
+    cursor: pointer; transition: all 0.2s;
+    font-size: 13px; border: 1px solid transparent;
   }
-  .loading-bar.active { display: block; }
-  .loading-bar-inner {
-    height: 100%; width: 0%;
-    background: linear-gradient(90deg, var(--accent), var(--gold));
-    border-radius: 2px; transition: width 0.3s;
-    animation: loading 2s ease-in-out infinite;
+  .episode-tab:hover { border-color: var(--accent); color: var(--text); }
+  .episode-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .episode-tab .badge {
+    display: inline-block; margin-left: 6px;
+    background: rgba(255,255,255,0.15); padding: 0 6px;
+    border-radius: 4px; font-size: 11px;
   }
-  @keyframes loading {
-    0% { width: 0%; margin-left: 0; }
-    50% { width: 60%; margin-left: 20%; }
-    100% { width: 0%; margin-left: 100%; }
+  .episode-tab.active .badge { background: rgba(255,255,255,0.25); }
+  /* Phase tabs */
+  .phase-tabs {
+    display: flex; gap: 4px;
+    background: var(--card2);
+    border-radius: 10px; padding: 4px;
+    margin: 12px 0;
+    overflow-x: auto;
   }
-  /* Result */
-  .result-section { display: none; }
-  .result-section.active { display: block; }
+  .phase-tab {
+    flex: 1; min-width: 100px;
+    padding: 10px 12px; text-align: center;
+    border-radius: 8px; font-size: 13px;
+    color: var(--text2); cursor: pointer;
+    transition: all 0.2s;
+    border: none; background: none;
+    white-space: nowrap;
+  }
+  .phase-tab:hover { color: var(--text); background: rgba(255,255,255,0.05); }
+  .phase-tab.active { background: var(--card); color: var(--text); box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+  .phase-tab .step { font-size: 10px; opacity: 0.6; display: block; }
+  .phase-tab .label { font-weight: 500; }
+  .phase-tab.done::after { content: ' ✅'; font-size: 12px; }
+  /* Phase content */
+  .phase-content { display: none; }
+  .phase-content.active { display: block; }
+  /* Duration selector for shots */
+  .duration-grid {
+    display: flex; gap: 8px; flex-wrap: wrap;
+    margin: 8px 0;
+  }
+  .dur-opt {
+    padding: 6px 14px; border-radius: 8px;
+    background: var(--card2); color: var(--text2);
+    border: 1px solid var(--border); cursor: pointer;
+    font-size: 12px; transition: all 0.2s;
+  }
+  .dur-opt:hover { border-color: var(--accent); }
+  .dur-opt.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  /* Storyboard cards */
   .storyboard-card {
     background: var(--card);
     border: 1px solid var(--border);
     border-radius: var(--radius);
     padding: 20px;
     margin-bottom: 12px;
-    position: relative;
     animation: fadeIn 0.3s ease-out;
   }
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  .sb-header {
-    display: flex; align-items: center; gap: 12px;
-    margin-bottom: 12px;
-  }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  .sb-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
   .sb-num {
     width: 32px; height: 32px;
     background: linear-gradient(135deg, var(--accent), var(--accent2));
     border-radius: 8px;
     display: flex; align-items: center; justify-content: center;
-    font-size: 14px; font-weight: 700; color: #fff;
-    flex-shrink: 0;
+    font-size: 14px; font-weight: 700; color: #fff; flex-shrink: 0;
   }
   .sb-time {
-    font-size: 12px; color: var(--gold);
-    font-weight: 600;
+    font-size: 12px; color: var(--gold); font-weight: 600;
     background: rgba(240,192,64,0.1);
     padding: 2px 10px; border-radius: 4px;
   }
@@ -165,10 +202,7 @@
     font-size: 11px; padding: 2px 8px;
     border-radius: 4px; background: var(--card2); color: var(--text2);
   }
-  .sb-desc {
-    font-size: 14px; color: var(--text);
-    margin-bottom: 8px; line-height: 1.6;
-  }
+  .sb-desc { font-size: 14px; color: var(--text); margin-bottom: 8px; line-height: 1.6; }
   .sb-prompt {
     background: var(--bg);
     border: 1px solid var(--border);
@@ -180,11 +214,9 @@
     font-family: 'SF Mono', 'Courier New', monospace;
     word-break: break-all;
     position: relative;
+    margin-top: 8px;
   }
-  .sb-prompt-label {
-    font-size: 11px; color: var(--text2);
-    margin-bottom: 6px; display: flex; align-items: center; gap: 6px;
-  }
+  .sb-prompt-label { font-size: 11px; color: var(--text2); margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
   .copy-btn {
     position: absolute; top: 8px; right: 8px;
     padding: 4px 8px; font-size: 11px;
@@ -193,7 +225,19 @@
     cursor: pointer; transition: all 0.2s;
   }
   .copy-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
-  /* Summary */
+  /* Prompt result boxes */
+  .prompt-box {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    margin: 12px 0;
+    font-size: 13px;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    position: relative;
+  }
+  .prompt-box .copy-btn { top: 12px; right: 12px; }
   .summary-bar {
     background: var(--card);
     border: 1px solid var(--border);
@@ -206,41 +250,51 @@
   .summary-item { text-align: center; }
   .summary-item .num { font-size: 24px; font-weight: 700; color: var(--accent); }
   .summary-item .label { font-size: 11px; color: var(--text2); }
-  /* Toast */
+  .loading-bar { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; margin: 8px 0; display: none; }
+  .loading-bar.active { display: block; }
+  .loading-bar-inner { height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent), var(--gold)); border-radius: 2px; animation: loading 2s ease-in-out infinite; }
+  @keyframes loading { 0% { width: 0%; margin-left: 0; } 50% { width: 60%; margin-left: 20%; } 100% { width: 0%; margin-left: 100%; } }
   .toast {
     position: fixed; top: 20px; right: 20px; z-index: 999;
     padding: 12px 20px; border-radius: 8px;
-    font-size: 13px;
-    transform: translateX(120%); transition: transform 0.3s;
+    font-size: 13px; transform: translateX(120%); transition: transform 0.3s;
     max-width: 360px;
   }
   .toast.show { transform: translateX(0); }
   .toast.success { background: #065f46; color: #a7f3d0; border: 1px solid #059669; }
   .toast.error { background: #7f1d1d; color: #fecaca; border: 1px solid #dc2626; }
-  /* History */
+  .toast.info { background: #1e3a5f; color: #93c5fd; border: 1px solid #3b82f6; }
+  /* Split config */
+  .split-config { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; margin: 12px 0; padding: 12px; background: var(--card2); border-radius: 8px; }
+  .placeholder-text { color: var(--text2); font-size: 13px; text-align: center; padding: 40px 20px; }
   .history-list { display: none; margin-top: 16px; }
   .history-list.active { display: block; }
   .history-item {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 12px 16px; margin-bottom: 8px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 8px; padding: 12px 16px; margin-bottom: 8px;
     cursor: pointer; transition: all 0.2s;
     display: flex; justify-content: space-between; align-items: center;
   }
   .history-item:hover { border-color: var(--accent); }
   .history-item .h-name { font-size: 14px; font-weight: 500; }
   .history-item .h-meta { font-size: 11px; color: var(--text2); }
-  .history-item .h-del {
-    color: var(--text2); cursor: pointer; padding: 4px;
-    border-radius: 4px; transition: all 0.2s;
-  }
+  .history-item .h-del { color: var(--text2); cursor: pointer; padding: 4px; border-radius: 4px; transition: all 0.2s; }
   .history-item .h-del:hover { background: rgba(255,0,0,0.1); color: #f87171; }
-  /* Responsive */
+  /* Episode content editor */
+  .episode-content { display: none; }
+  .episode-content.active { display: block; }
+  .episode-preview { 
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 8px; padding: 16px; margin: 12px 0;
+    max-height: 200px; overflow-y: auto;
+    font-size: 13px; line-height: 1.7;
+    white-space: pre-wrap;
+  }
   @media (max-width: 600px) {
     .container { padding: 16px 12px; }
-    .input-section { padding: 16px; }
+    .section-card { padding: 16px; }
     .config-row { flex-direction: column; align-items: stretch; }
+    .phase-tab { min-width: 80px; font-size: 12px; padding: 8px; }
   }
 </style>
 </head>
@@ -250,8 +304,8 @@
   <div class="nav-brand">
     <div class="nav-logo">金</div>
     <div>
-      <div class="nav-title">一抹金蓝 <span>·</span> 短剧分镜工厂</div>
-      <div class="nav-subtitle">AI Storyboard Factory</div>
+      <div class="nav-title">一抹金蓝 <span>·</span> 短剧分镜工厂 <span style="font-size:11px;color:var(--gold);">v3</span></div>
+      <div class="nav-subtitle">AI Storyboard Factory · 人物→场景→分镜 三段式生成</div>
     </div>
   </div>
   <div class="nav-actions">
@@ -261,10 +315,25 @@
 </div>
 
 <div class="container">
-  <!-- Input -->
-  <div class="input-section">
-    <h2>📝 输入剧本 <small>粘贴剧本内容，AI自动拆分为分镜</small></h2>
 
+  <!-- ============ STEP 1: 上传/粘贴剧本 ============ -->
+  <div class="section-card" id="step-upload">
+    <h2>📂 上传剧本</h2>
+    <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()">
+      <div class="icon">📄</div>
+      <div class="text">点击上传 或 拖拽剧本文件到此处</div>
+      <div class="sub">支持 .txt · .docx</div>
+      <input type="file" id="file-input" accept=".txt,.docx" onchange="handleFileUpload(event)">
+    </div>
+    <p style="text-align:center;color:var(--text2);font-size:13px;">— 或 直接粘贴剧本内容 —</p>
+    <textarea id="script-input" placeholder="在此粘贴剧本内容（支持多集剧本）&#10;&#10;示例：&#10;第1集&#10;场景1 办公室·日&#10;李明坐在办公桌前发呆...&#10;&#10;第2集&#10;场景1 林荫道·黄昏&#10;王婷独自走在林荫道上..."></textarea>
+    <div class="char-counter"><span id="char-count">0</span> 字</div>
+  </div>
+
+  <!-- ============ STEP 2: 分集配置 ============ -->
+  <!-- Global Config -->
+  <div class="section-card" id="global-config">
+    <h2>⚙️ 生成配置</h2>
     <div class="config-row">
       <div class="config-group">
         <label>风格预设</label>
@@ -287,32 +356,47 @@
       </div>
       <div class="config-group" style="flex:1;min-width:200px;">
         <label>API Key</label>
-        <input type="password" id="api-key" placeholder="输入你的 API Key" style="width:100%;">
+        <input type="password" id="api-key" placeholder="你的 API Key" style="width:100%;">
       </div>
-    </div>
-
-    <textarea id="script-input" placeholder="在此粘贴剧本内容&#10;&#10;示例：&#10;场景1 办公室·日&#10;李明坐在办公桌前，盯着电脑屏幕发呆。&#10;王婷走过来，敲了敲他的桌子。&#10;王婷："又在摸鱼？老板找你。"&#10;李明吓了一跳，赶紧坐直。&#10;&#10;场景2 走廊·日&#10;李明快步走向老板办公室，遇到同事张伟。&#10;张伟："哥们，劝你做好心理准备。"&#10;李明苦笑："又怎么了？"&#10;张伟拍拍他肩膀走了。"></textarea>
-    <div class="char-counter"><span id="char-count">0</span> 字</div>
-
-    <div class="loading-bar" id="loading-bar"><div class="loading-bar-inner"></div></div>
-
-    <div class="action-bar">
-      <button class="btn btn-primary" onclick="generateStoryboard()">🎬 生成分镜</button>
-      <button class="btn btn-ghost" onclick="clearAll()">清空</button>
-      <button class="btn btn-ghost" onclick="copyAll()">📋 复制全部</button>
     </div>
   </div>
 
-  <!-- Result -->
-  <div class="result-section" id="result-section">
-    <div class="summary-bar" id="summary-bar">
-      <div class="summary-item"><div class="num" id="sb-count">0</div><div class="label">分镜数</div></div>
-      <div class="summary-item"><div class="num" id="sb-duration">0s</div><div class="label">总时长</div></div>
-      <div class="summary-item"><div class="num" id="sb-words">0</div><div class="label">剧本字数</div></div>
+  <div class="section-card" id="step-split" style="display:none;">
+    <h2>📑 分集设置</h2>
+    <div class="split-config">
+      <div class="config-group">
+        <label>每集时长（可选）</label>
+        <select id="episode-duration">
+          <option value="0">不指定，按剧本关键字自动分集</option>
+          <option value="30">30秒</option>
+          <option value="45">45秒</option>
+          <option value="60">60秒</option>
+          <option value="90">90秒</option>
+          <option value="120">120秒</option>
+          <option value="180">180秒</option>
+          <option value="300">300秒</option>
+        </select>
+      </div>
+      <div class="config-group">
+        <label>分集关键字</label>
+        <input type="text" id="split-keywords" value="第\d+集,第\d+章,Episode" placeholder="默认: 第\d+集,第\d+章" style="width:240px;">
+      </div>
+      <button class="btn btn-primary" onclick="splitEpisodes()">🔄 执行分集</button>
     </div>
-    <div id="storyboard-list"></div>
-    <div style="text-align:center;margin-top:16px;">
-      <button class="btn btn-ghost" onclick="copyAll()">📋 复制全部提示词</button>
+
+    <!-- Episode tabs -->
+    <div class="episode-tabs" id="episode-tabs"></div>
+
+    <!-- Episode content area -->
+    <div id="episode-content-area"></div>
+  </div>
+
+  <!-- Result Section -->
+  <div class="result-section" id="result-section" style="display:none;">
+    <div class="summary-bar" id="summary-bar">
+      <div class="summary-item"><div class="num" id="sb-count">0</div><div class="label">总集数</div></div>
+      <div class="summary-item"><div class="num" id="sb-total-duration">0s</div><div class="label">总时长</div></div>
+      <div class="summary-item"><div class="num" id="sb-total-shots">0</div><div class="label">总镜头数</div></div>
     </div>
   </div>
 
@@ -323,11 +407,10 @@
   </div>
 </div>
 
-<!-- Toast -->
 <div class="toast" id="toast"></div>
 
 <script>
-// ==================== Config ====================
+// ==================== STYLES ====================
 const STYLE_PROMPTS = {
   realistic: '写实风格，仿真人视觉效果，自然光影，真实场景布局，贴近真人影视的质感和色彩',
   cinematic: '电影质感，宽银幕比例，浅景深，电影级调色，戏剧性光影，大气震撼的视觉效果',
@@ -335,52 +418,38 @@ const STYLE_PROMPTS = {
   romantic: '浪漫情感风格，柔和暖色调，逆光效果，梦幻般的光影过渡，细腻的人物表情捕捉',
   thriller: '悬疑惊悚风格，冷色调，低照度，阴影交错，紧张压抑的氛围，不稳定的手持运镜',
 };
-
 const STYLE_NAMES = {
   realistic: '仿真人写实', cinematic: '电影质感', action: '快节奏动作',
   romantic: '浪漫情感', thriller: '悬疑惊悚',
 };
 
-// ==================== Storage ====================
-function saveHistory(name, scenes) {
-  const history = JSON.parse(localStorage.getItem('sb_history') || '[]');
-  history.unshift({
-    id: Date.now(),
-    name: name || `分镜 ${new Date().toLocaleString('zh-CN')}`,
-    scenes: scenes,
-    count: scenes.length,
-    time: new Date().toISOString()
-  });
-  if (history.length > 20) history.pop();
-  localStorage.setItem('sb_history', JSON.stringify(history));
+// ==================== STATE ====================
+let episodes = []; // [{title, rawContent, characters: null, scenes: null, storyboards: null}]
+let currentEpisodeIdx = 0;
+let currentPhaseIdx = 0; // 0=characters, 1=scenes, 2=storyboards
+let shotDurationMode = 'auto'; // 'auto' | '5' | '10' | '15'
+
+// ==================== STORAGE ====================
+function saveHistory(data) {
+  const history = JSON.parse(localStorage.getItem('sb3_history') || '[]');
+  history.unshift({ id: Date.now(), data: data, name: data.title || `分镜 ${new Date().toLocaleString('zh-CN')}`, time: new Date().toISOString() });
+  if (history.length > 10) history.pop();
+  localStorage.setItem('sb3_history', JSON.stringify(history));
 }
 
-function loadHistory() {
-  return JSON.parse(localStorage.getItem('sb_history') || '[]');
-}
-
+function loadHistory() { return JSON.parse(localStorage.getItem('sb3_history') || '[]'); }
 function deleteHistory(id) {
-  let history = loadHistory();
-  history = history.filter(h => h.id !== id);
-  localStorage.setItem('sb_history', JSON.stringify(history));
+  let h = loadHistory().filter(x => x.id !== id);
+  localStorage.setItem('sb3_history', JSON.stringify(h));
   renderHistory();
 }
+function loadAPIKey() { document.getElementById('api-key').value = localStorage.getItem('sb3_api_key') || ''; }
+function saveAPIKey() { localStorage.setItem('sb3_api_key', document.getElementById('api-key').value); }
 
-function loadAPIKey() {
-  const key = localStorage.getItem('sb_api_key') || '';
-  document.getElementById('api-key').value = key;
-}
-
-function saveAPIKey() {
-  const key = document.getElementById('api-key').value;
-  localStorage.setItem('sb_api_key', key);
-}
-
-// ==================== UI ====================
-function showToast(msg, type = 'success') {
+// ==================== UI HELPERS ====================
+function showToast(msg, type='success') {
   const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className = `toast ${type} show`;
+  t.textContent = msg; t.className = `toast ${type} show`;
   setTimeout(() => t.classList.remove('show'), 3000);
 }
 
@@ -391,173 +460,603 @@ function toggleHistory() {
 }
 
 function renderHistory() {
-  const container = document.getElementById('history-items');
-  const history = loadHistory();
-  if (history.length === 0) {
-    container.innerHTML = '<div style="color:var(--text2);font-size:13px;text-align:center;padding:20px;">暂无历史记录</div>';
-    return;
-  }
-  container.innerHTML = history.map(h => `
-    <div class="history-item" onclick="loadHistoryItem(${h.id})">
-      <div>
-        <div class="h-name">${h.name}</div>
-        <div class="h-meta">${h.count} 个分镜 · ${new Date(h.time).toLocaleString('zh-CN')}</div>
-      </div>
-      <span class="h-del" onclick="event.stopPropagation();deleteHistory(${h.id})">✕</span>
-    </div>
-  `).join('');
+  const c = document.getElementById('history-items');
+  const h = loadHistory();
+  if (!h.length) { c.innerHTML = '<div style="color:var(--text2);font-size:13px;text-align:center;padding:20px;">暂无历史记录</div>'; return; }
+  c.innerHTML = h.map(x => `<div class="history-item" onclick="loadHistoryItem(${x.id})"><div><div class="h-name">${x.name}</div><div class="h-meta">${new Date(x.time).toLocaleString('zh-CN')}</div></div><span class="h-del" onclick="event.stopPropagation();deleteHistory(${x.id})">✕</span></div>`).join('');
 }
 
 function loadHistoryItem(id) {
-  const history = loadHistory();
-  const item = history.find(h => h.id === id);
+  const item = loadHistory().find(x => x.id === id);
   if (!item) return;
-  displayStoryboards(item.scenes);
+  episodes = item.data.episodes || [];
+  if (episodes.length === 0) { showToast('历史数据无效', 'error'); return; }
+  currentEpisodeIdx = 0; currentPhaseIdx = 0;
+  document.getElementById('step-split').style.display = 'block';
+  document.getElementById('result-section').style.display = 'block';
   document.getElementById('history-list').classList.remove('active');
+  renderEpisodeTabs();
+  showEpisode(0);
+  updateSummary();
   showToast('已加载历史记录');
 }
 
 function showSettings() {
-  const keyInput = document.getElementById('api-key');
-  const currentType = keyInput.type;
-  keyInput.type = currentType === 'password' ? 'text' : 'password';
-  if (keyInput.type === 'text') {
-    setTimeout(() => { keyInput.type = 'password'; }, 3000);
+  const k = document.getElementById('api-key');
+  k.type = k.type === 'password' ? 'text' : 'password';
+  if (k.type === 'text') setTimeout(() => k.type = 'password', 3000);
+}
+
+// ==================== FILE UPLOAD ====================
+function handleFileUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  const ext = file.name.split('.').pop().toLowerCase();
+  if (ext === 'txt') {
+    reader.onload = e => {
+      document.getElementById('script-input').value = e.target.result;
+      document.getElementById('char-count').textContent = e.target.result.length;
+      showToast('✅ 已读取剧本文件');
+      onScriptReady();
+    };
+    reader.readAsText(file);
+  } else if (ext === 'docx') {
+    reader.onload = async e => {
+      try {
+        const result = await mammoth.extractRawText({arrayBuffer: e.target.result});
+        document.getElementById('script-input').value = result.value;
+        document.getElementById('char-count').textContent = result.value.length;
+        showToast('✅ 已读取 Word 文件');
+        onScriptReady();
+      } catch(err) {
+        showToast('❌ 读取 Word 文件失败: ' + err.message, 'error');
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  } else {
+    showToast('❌ 不支持的文件格式，请上传 .txt 或 .docx', 'error');
   }
+  event.target.value = '';
 }
 
-// ==================== Script Parser ====================
-function parseScript(text) {
-  if (!text.trim()) return [];
-  const lines = text.trim().split('\n').filter(l => l.trim());
-  return lines.map(l => l.trim()).filter(l => l.length > 0);
+// Drag & drop
+const uploadZone = document.getElementById('upload-zone');
+uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('dragover'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+uploadZone.addEventListener('drop', e => {
+  e.preventDefault();
+  uploadZone.classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file) {
+    const input = document.getElementById('file-input');
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    input.files = dt.files;
+    handleFileUpload({target: input});
+  }
+});
+
+function onScriptReady() {
+  document.getElementById('step-split').style.display = 'block';
+  document.getElementById('result-section').style.display = 'block';
+  // Auto-split with defaults
+  splitEpisodes();
 }
 
-// ==================== AI Generation ====================
-async function generateStoryboard() {
+// ==================== SPLIT EPISODES ====================
+function splitEpisodes() {
   const script = document.getElementById('script-input').value.trim();
-  if (!script) {
-    showToast('请先输入剧本内容', 'error');
-    return;
+  if (!script) { showToast('请先输入或上传剧本内容', 'error'); return; }
+
+  const epDuration = parseInt(document.getElementById('episode-duration').value);
+  const keywordsRaw = document.getElementById('split-keywords').value.trim() || '第\\d+集,第\\d+章,Episode';
+  const keywords = keywordsRaw.split(',').map(k => k.trim()).filter(Boolean);
+
+  let parts = [];
+
+  if (epDuration > 0) {
+    // Split by character count (~3 chars = ~1 sec for Chinese)
+    const charsPerEp = epDuration * 3;
+    let remaining = script;
+    let epIdx = 1;
+    while (remaining.length > 0) {
+      let chunk = remaining.substring(0, charsPerEp);
+      // Try to break at paragraph boundary near the limit
+      const nextNewline = chunk.lastIndexOf('\n');
+      if (nextNewline > charsPerEp * 0.7) {
+        chunk = remaining.substring(0, nextNewline);
+      }
+      parts.push({ title: `第${epIdx}集`, content: chunk.trim() });
+      remaining = remaining.substring(chunk.length).trim();
+      epIdx++;
+      if (epIdx > 200) break; // safety
+    }
+  } else {
+    // Split by keywords
+    const lines = script.split('\n');
+    let currentEp = { title: '第1集', content: '' };
+    let epNum = 1;
+    let found = false;
+
+    for (const line of lines) {
+      let isNewEp = false;
+      for (const kw of keywords) {
+        try { if (new RegExp(kw).test(line.trim())) { isNewEp = true; break; } } catch(e) {
+          if (line.trim().includes(kw)) { isNewEp = true; break; }
+        }
+      }
+      if (isNewEp) {
+        if (currentEp.content.trim()) parts.push(currentEp);
+        epNum++;
+        currentEp = { title: line.trim() || `第${epNum}集`, content: '' };
+        found = true;
+      } else {
+        if (currentEp.content) currentEp.content += '\n';
+        currentEp.content += line;
+      }
+    }
+    if (currentEp.content.trim()) parts.push(currentEp);
+    if (!found) {
+      // No keywords found, treat whole script as one episode
+      parts = [{ title: '第1集', content: script }];
+    }
   }
 
+  episodes = parts.map((p, i) => ({
+    title: p.title || `第${i+1}集`,
+    rawContent: p.content,
+    characters: null,
+    scene: null,
+    storyboards: null,
+    durationMode: 'auto'
+  }));
+
+  renderEpisodeTabs();
+  showEpisode(0);
+  updateSummary();
+  document.getElementById('episode-content-area').style.display = 'block';
+  showToast(`✅ 已分为 ${episodes.length} 集`);
+}
+
+function renderEpisodeTabs() {
+  const container = document.getElementById('episode-tabs');
+  container.innerHTML = episodes.map((ep, i) =>
+    `<div class="episode-tab ${i === currentEpisodeIdx ? 'active' : ''}" onclick="switchEpisode(${i})">
+      📺 ${ep.title}
+      <span class="badge">${ep.rawContent.length}字</span>
+    </div>`
+  ).join('');
+}
+
+function switchEpisode(idx) {
+  currentEpisodeIdx = idx;
+  currentPhaseIdx = 0;
+  document.querySelectorAll('.episode-tab').forEach((t, i) => t.classList.toggle('active', i === idx));
+  showEpisode(idx);
+}
+
+function showEpisode(idx) {
+  const ep = episodes[idx];
+  if (!ep) return;
+  const area = document.getElementById('episode-content-area');
+
+  // Phase tabs
+  const charsDone = ep.characters ? 'done' : '';
+  const scenesDone = ep.scene ? 'done' : '';
+  const sbDone = ep.storyboards ? 'done' : '';
+
+  let html = `
+    <div class="phase-tabs">
+      <button class="phase-tab ${charsDone} ${currentPhaseIdx === 0 ? 'active' : ''}" onclick="switchPhase(0)">
+        <span class="step">第1步</span>
+        <span class="label">👤 人物提示词</span>
+      </button>
+      <button class="phase-tab ${scenesDone} ${currentPhaseIdx === 1 ? 'active' : ''}" onclick="switchPhase(1)">
+        <span class="step">第2步</span>
+        <span class="label">🎬 场景提示词</span>
+      </button>
+      <button class="phase-tab ${sbDone} ${currentPhaseIdx === 2 ? 'active' : ''}" onclick="switchPhase(2)">
+        <span class="step">第3步</span>
+        <span class="label">🎥 视频分镜</span>
+      </button>
+    </div>
+    <div class="episode-preview">${escHtml(ep.rawContent)}</div>
+  `;
+
+  // Phase content
+  html += `<div id="phase-content-container">`;
+  html += renderPhaseCharacters(idx);
+  html += renderPhaseScene(idx);
+  html += renderPhaseStoryboard(idx);
+  html += `</div>`;
+
+  area.innerHTML = html;
+}
+
+function switchPhase(idx) {
+  currentPhaseIdx = idx;
+  const ep = episodes[currentEpisodeIdx];
+  const area = document.getElementById('phase-content-container');
+  if (idx === 0) area.innerHTML = renderPhaseCharacters(currentEpisodeIdx);
+  else if (idx === 1) area.innerHTML = renderPhaseScene(currentEpisodeIdx);
+  else if (idx === 2) area.innerHTML = renderPhaseStoryboard(currentEpisodeIdx);
+  document.querySelectorAll('.phase-tab').forEach((t, i) => t.classList.toggle('active', i === idx));
+}
+
+// ==================== PHASE 1: CHARACTERS ====================
+function renderPhaseCharacters(idx) {
+  const ep = episodes[idx];
+  const hasResult = ep.characters !== null;
+  return `
+  <div class="phase-content active">
+    <div class="action-bar">
+      <button class="btn btn-primary" onclick="generateCharacters(${idx})">👤 生成人物提示词</button>
+      ${hasResult ? `<button class="btn btn-ghost btn-sm" onclick="copyText('characters-${idx}')">📋 复制人物提示词</button>` : ''}
+      ${hasResult ? `<button class="btn btn-ghost btn-sm" onclick="regenerateCharacters(${idx})" title="重新生成将覆盖当前结果">🔄 重新生成</button>` : ''}
+    </div>
+    <div class="loading-bar" id="loading-bar-phase1"><div class="loading-bar-inner"></div></div>
+    ${hasResult ? `<div class="prompt-box" id="characters-${idx}">${escHtml(ep.characters)}</div>` : '<div class="placeholder-text">👆 点击「生成人物提示词」开始</div>'}
+  </div>`;
+}
+
+async function generateCharacters(idx) {
+  const ep = episodes[idx];
+  if (!ep) return;
+  const apiKey = getApiKey();
+  if (!apiKey) return;
   const style = document.getElementById('style-preset').value;
   const model = document.getElementById('model-select').value;
-  const apiKey = document.getElementById('api-key').value.trim();
 
-  if (!apiKey) {
-    showToast('请输入 API Key (设置中可查看/隐藏)', 'error');
-    return;
-  }
+  const prompt = `你是一位专业的短剧角色设定师。请根据以下剧本内容，提取并描述剧中出现的主要角色。
 
-  saveAPIKey();
+每个角色需要包含：
+1. **角色名** — 姓名/称呼
+2. **外貌特征** — 年龄、体型、发型、服饰风格、标志性特征（精确到服装颜色）
+3. **性格特点** — 核心性格、说话风格、典型微表情/动作
+4. **角色关系** — 与其他角色的关系
+5. **关键标识** — 视觉上最容易识别的特征
 
-  const loadingBar = document.getElementById('loading-bar');
-  loadingBar.classList.add('active');
-
-  const btn = document.querySelector('.btn-primary');
-  btn.disabled = true;
-  btn.textContent = '⏳ 生成中...';
-
-  try {
-    const systemPrompt = `你是一位专业短剧分镜师和AI视频提示词工程师。请将用户提供的剧本内容拆分为连续的分镜。
-
-每个分镜必须包含：
-1. 分镜编号（从1开始）
-2. 时间长度（每段6秒）
-3. 画面描述（中文，简洁明了，20-30字）
-4. AI视频提示词（英文，详细描述景别、镜头运动、人物动作、光影、场景）
+输出格式：
+【角色名】
+- 外貌：...
+- 性格：...
+- 关系：...
+- 视觉标识：...
 
 风格要求：${STYLE_PROMPTS[style]}
+注意：输出中文，角色描述要足够详细，便于AI视频生成保持角色一致性。`;
+
+  await callAIAndShow(idx, prompt, 'characters', '👤 人物提示词生成完成！', 'phase1');
+}
+
+function regenerateCharacters(idx) {
+  if (!confirm('重新生成将覆盖当前人物提示词，确认？')) return;
+  generateCharacters(idx);
+}
+
+// ==================== PHASE 2: SCENE ====================
+function renderPhaseScene(idx) {
+  const ep = episodes[idx];
+  const hasChar = ep.characters !== null;
+  const hasResult = ep.scene !== null;
+  const charReady = hasChar ? '' : ' disabled';
+  return `
+  <div class="phase-content" style="display:${currentPhaseIdx === 1 ? 'block' : 'none'}">
+    ${!hasChar ? '<div style="color:var(--warn);font-size:13px;margin-bottom:8px;">⚠️ 请先在第1步生成人物提示词</div>' : ''}
+    <div class="action-bar">
+      <button class="btn btn-warn" onclick="generateScene(${idx})"${charReady}>🎬 生成场景提示词</button>
+      ${hasResult ? `<button class="btn btn-ghost btn-sm" onclick="copyText('scene-${idx}')">📋 复制场景提示词</button>` : ''}
+      ${hasResult ? `<button class="btn btn-ghost btn-sm" onclick="regenerateScene(${idx})">🔄 重新生成</button>` : ''}
+    </div>
+    <div class="loading-bar" id="loading-bar-phase2"><div class="loading-bar-inner"></div></div>
+    ${hasResult ? `<div class="prompt-box" id="scene-${idx}">${escHtml(ep.scene)}</div>` :
+      hasChar ? '<div class="placeholder-text">👆 点击「生成场景提示词」基于人物和剧本生成场景</div>' :
+      '<div class="placeholder-text" style="color:var(--warn);">⚠️ 请先完成第1步「人物提示词」</div>'}
+  </div>`;
+}
+
+async function generateScene(idx) {
+  const ep = episodes[idx];
+  if (!ep || !ep.characters) { showToast('请先生成人物提示词', 'error'); return; }
+  const apiKey = getApiKey();
+  if (!apiKey) return;
+  const style = document.getElementById('style-preset').value;
+  const model = document.getElementById('model-select').value;
+
+  const prompt = `你是一位专业短剧场景设计师。基于以下剧本内容和已设定的人物信息，为每个场景生成详细的场景提示词。
+
+=== 人物设定 ===
+${ep.characters}
+
+=== 剧本内容 ===
+${ep.rawContent}
+
+要求：
+1. 按剧本顺序，为每个场景生成描述
+2. 每个场景包含：场景编号、场景名称、环境描述（精确到光线/色调/空间布局）、在场景中的人物位置和动作
+3. 确保场景之间逻辑连贯、空间关系合理
+
+输出格式（每个场景）：
+【场景X】场景名称（时间/地点）
+- 环境：精确描述布景、灯光、色调、空间氛围
+- 人物位置：角色A在做什么位置，角色B在做什么
+- 道具/特效：关键道具和视觉特效
+
+风格要求：${STYLE_PROMPTS[style]}
+输出中文。环境描述要精确到光线的颜色和方向、空间的大小和氛围。`;
+
+  await callAIAndShow(idx, prompt, 'scene', '🎬 场景提示词生成完成！', 'phase2');
+}
+
+function regenerateScene(idx) {
+  if (!confirm('重新生成将覆盖当前场景提示词，确认？')) return;
+  generateScene(idx);
+}
+
+// ==================== PHASE 3: STORYBOARD ====================
+function renderPhaseStoryboard(idx) {
+  const ep = episodes[idx];
+  const hasChar = ep.characters !== null;
+  const hasScene = ep.scene !== null;
+  const hasResult = ep.storyboards !== null;
+
+  const durOpts = [
+    { val: 'auto', label: '🎯 自动匹配' },
+    { val: '5', label: '5s' },
+    { val: '10', label: '10s' },
+    { val: '15', label: '15s' },
+  ];
+
+  let sbHtml = '';
+  if (hasResult && ep.storyboards) {
+    const shots = ep.storyboards;
+    const totalDuration = shots.reduce((sum, s) => sum + (s.duration || 6), 0);
+    sbHtml = `
+    <div class="summary-bar">
+      <div class="summary-item"><div class="num">${shots.length}</div><div class="label">镜头数</div></div>
+      <div class="summary-item"><div class="num">${totalDuration}s</div><div class="label">总时长</div></div>
+    </div>
+    <div style="text-align:right;margin-bottom:8px;">
+      <button class="btn btn-ghost btn-sm" onclick="copyAllShots(${idx})">📋 复制全部</button>
+    </div>
+    ${shots.map((s, i) => `
+    <div class="storyboard-card">
+      <div class="sb-header">
+        <div class="sb-num">${i+1}</div>
+        <div class="sb-time">⏱ ${s.time || `${s.duration || 6}s`}</div>
+        <div class="sb-tags">
+          <span class="sb-tag">${s.duration || 6}秒</span>
+        </div>
+      </div>
+      <div class="sb-desc">🎨 ${escHtml(s.desc || '')}</div>
+      <div class="sb-prompt">
+        <div class="sb-prompt-label">🤖 Prompt</div>
+        <button class="copy-btn" onclick="copySinglePrompt(${idx}, ${i})">复制</button>
+        <div>${escHtml(s.prompt || '')}</div>
+      </div>
+    </div>`).join('')}`;
+  }
+
+  const notReady = !hasScene ? '<div style="color:var(--warn);font-size:13px;margin-bottom:8px;">⚠️ 请先完成第2步「场景提示词」</div>' : '';
+  return `
+  <div class="phase-content" style="display:${currentPhaseIdx === 2 ? 'block' : 'none'}">
+    ${notReady}
+    <div class="config-row">
+      <div class="config-group">
+        <label>分镜时长</label>
+        <div class="duration-grid" id="duration-grid">
+          ${durOpts.map(d => `<span class="dur-opt ${(ep.durationMode || 'auto') === d.val ? 'active' : ''}" onclick="setShotDuration(${idx}, '${d.val}')">${d.label}</span>`).join('')}
+        </div>
+      </div>
+    </div>
+    <div class="action-bar">
+      <button class="btn btn-success" onclick="generateStoryboard(${idx})" ${!hasScene ? 'disabled' : ''}>🎥 生成视频分镜</button>
+      ${hasResult ? `<button class="btn btn-ghost btn-sm" onclick="regenerateStoryboard(${idx})">🔄 重新生成</button>` : ''}
+    </div>
+    <div class="loading-bar" id="loading-bar-phase3"><div class="loading-bar-inner"></div></div>
+    ${sbHtml || '<div class="placeholder-text">👆 点击「生成视频分镜」基于人物+场景生成</div>'}
+  </div>`;
+}
+
+function setShotDuration(idx, mode) {
+  episodes[idx].durationMode = mode;
+  document.querySelectorAll('#duration-grid .dur-opt').forEach(el => {
+    el.classList.toggle('active', el.getAttribute('onclick')?.includes(`'${mode}'`));
+  });
+  // Visual update
+  const grid = document.getElementById('duration-grid');
+  if (grid) {
+    grid.querySelectorAll('.dur-opt').forEach(el => {
+      el.classList.toggle('active', el.textContent.includes(mode === 'auto' ? '自动匹配' : mode + 's'));
+    });
+  }
+}
+
+async function generateStoryboard(idx) {
+  const ep = episodes[idx];
+  if (!ep || !ep.characters || !ep.scene) {
+    showToast('请先完成人物和场景提示词', 'error');
+    return;
+  }
+  const apiKey = getApiKey();
+  if (!apiKey) return;
+  const style = document.getElementById('style-preset').value;
+  const model = document.getElementById('model-select').value;
+  const durMode = ep.durationMode || 'auto';
+
+  const durInstruction = durMode === 'auto'
+    ? '每个分镜的时长根据剧情内容动态匹配——对话平淡时镜头短（2-4秒）、情绪高潮或动作戏镜头长（8-15秒）、普通叙事5-7秒。总时长控制在合理范围内，所有分镜时长之和覆盖剧本核心内容。输出格式中每个分镜独立标注时长。'
+    : `每个分镜统一为 ${durMode} 秒。输出格式中每个分镜标注为 ${durMode}s。`;
+
+  const prompt = `你是一位AI视频分镜导演和提示词工程师。基于以下完整的设定（人物+场景+剧本），为这段剧情生成连续的视频分镜。
+
+=== 人物设定 ===
+${ep.characters}
+
+=== 场景设定 ===
+${ep.scene}
+
+=== 剧本内容 ===
+${ep.rawContent}
+
+要求：
+1. 每个分镜包含：编号、时长、景别、运镜、画面描述（中文）、提示词（英文）
+2. ${durInstruction}
+3. 分镜之间必须完美衔接（角色位置、视线、动作逻辑连贯）
+4. 提示词（英文）必须包含：shot type, camera movement, lighting, character appearance/action, environment details
+5. 提示词不少于150个英文单词，细节越精确越好
 
 输出格式（严格按此格式，不要多余内容）：
 ===
-分镜1 | 0-6s
+分镜1 | 6s
+景别：中景
+运镜：推
 画面描述：...
-提示词：...
+提示词（English）：...
 ===
-分镜2 | 6-12s
+分镜2 | 4s
+景别：特写
+运镜：固定
 画面描述：...
-提示词：...
+提示词（English）：...
 ===
 
-注意：
-- 每个分镜固定6秒
-- 分镜之间必须完美衔接（角色、场景、动作逻辑连贯）
-- 提示词用英文，包含：shot type, camera movement, lighting, character action, setting
-- 画面描述用中文
-- 输出纯文本，不要markdown格式`;
+风格要求：${STYLE_PROMPTS[style]}
+注意：不要修改剧本内容，严格按照剧本的叙事顺序和节奏来分配时间和镜头。`;
+
+  await callAIAndShow(idx, prompt, 'storyboards', '🎥 视频分镜生成完成！', 'phase3');
+}
+
+function regenerateStoryboard(idx) {
+  if (!confirm('重新生成将覆盖当前分镜结果，确认？')) return;
+  generateStoryboard(idx);
+}
+
+// ==================== AI CALL HELPER ====================
+function getApiKey() {
+  const key = document.getElementById('api-key').value.trim();
+  if (!key) { showToast('请输入 API Key', 'error'); return null; }
+  saveAPIKey();
+  return key;
+}
+
+async function callAIAndShow(idx, prompt, field, successMsg, phaseId) {
+  const model = document.getElementById('model-select').value;
+  const apiKey = getApiKey();
+  if (!apiKey) return;
+
+  const style = document.getElementById('style-preset').value;
+  const loadingBar = document.getElementById('loading-bar-' + phaseId);
+  if (loadingBar) loadingBar.classList.add('active');
+
+  try {
+    const systemPrompt = `你是一位专业的短剧创作AI助手。请严格按照输出格式要求返回纯文本结果。
+不要使用markdown格式，不要有多余的说明文字。
+
+风格要求：${STYLE_PROMPTS[style]}`;
 
     const endpoint = getEndpoint(model);
-    const result = await callAI(endpoint, apiKey, model, systemPrompt, script);
+    const result = await callAI(endpoint, apiKey, model, systemPrompt, prompt);
 
-    const scenes = parseAIResponse(result);
-    if (scenes.length === 0) {
-      showToast('AI返回格式异常，请重试', 'error');
+    if (field === 'storyboards') {
+      episodes[idx].storyboards = parseStoryboardResponse(result);
     } else {
-      displayStoryboards(scenes);
-      saveHistory(`${STYLE_NAMES[style]} · ${scenes.length}镜`, scenes);
-      showToast(`✅ 成功生成 ${scenes.length} 个分镜`);
+      episodes[idx][field] = result;
     }
+
+    // Update all phases' done status
+    document.querySelectorAll('.episode-tab').forEach((t, i) => {
+      t.querySelector('.badge').textContent = episodes[i].rawContent.length + '字';
+    });
+
+    showEpisode(currentEpisodeIdx);
+    updateSummary();
+    showToast(`✅ ${successMsg}`);
   } catch (err) {
     showToast('生成失败: ' + err.message, 'error');
   } finally {
-    loadingBar.classList.remove('active');
-    btn.disabled = false;
-    btn.textContent = '🎬 生成分镜';
+    if (loadingBar) loadingBar.classList.remove('active');
   }
 }
 
+function parseStoryboardResponse(text) {
+  const shots = [];
+  const blocks = text.split('===').filter(b => b.trim());
+
+  for (const block of blocks) {
+    const lines = block.trim().split('\n').filter(l => l.trim());
+    let shot = { num: shots.length + 1, duration: 6, time: '6s', desc: '', prompt: '', shotType: '', movement: '' };
+
+    for (const line of lines) {
+      const l = line.trim();
+      if (l.match(/^分镜\d+/)) {
+        const durMatch = l.match(/(\d+)[s秒]/);
+        if (durMatch) { shot.duration = parseInt(durMatch[1]); shot.time = durMatch[1] + 's'; }
+        const rangeMatch = l.match(/(\d+)[s秒]-(\d+)[s秒]/);
+        if (rangeMatch) { shot.time = rangeMatch[1] + '-' + rangeMatch[2] + 's'; }
+      } else if (l.startsWith('景别')) {
+        shot.shotType = l.replace(/^景别[：:]\s*/, '');
+      } else if (l.startsWith('运镜')) {
+        shot.movement = l.replace(/^运镜[：:]\s*/, '');
+      } else if (l.match(/^画面描述[：:]|^画面[：:]/)) {
+        shot.desc = l.replace(/^画面描述[：:]\s*/, '').replace(/^画面[：:]\s*/, '');
+      } else if (l.match(/^提示词[：:]|^prompt[：:]/i)) {
+        shot.prompt = l.replace(/^提示词[：:]\s*/i, '').replace(/^[Pp]rompt[：:]\s*/i, '');
+      }
+    }
+    if (shot.desc && shot.prompt) shots.push(shot);
+  }
+
+  // Fallback: simple line parsing
+  if (shots.length === 0) {
+    const lines = text.split('\n').filter(l => l.trim());
+    let current = null;
+    for (const line of lines) {
+      const l = line.trim();
+      if (l.match(/^分镜\s*\d+/)) {
+        if (current && current.desc && current.prompt) shots.push(current);
+        current = { num: shots.length + 1, duration: 6, time: '6s', desc: '', prompt: '', shotType: '', movement: '' };
+        const durMatch = l.match(/(\d+)[s秒]/);
+        if (durMatch) { current.duration = parseInt(durMatch[1]); current.time = durMatch[1] + 's'; }
+      } else if (current) {
+        if (l.startsWith('景别')) current.shotType = l.replace(/^景别[：:]\s*/, '');
+        else if (l.startsWith('运镜')) current.movement = l.replace(/^运镜[：:]\s*/, '');
+        else if (l.match(/^画面|^描述/)) current.desc += l.replace(/^画面[：:]\s*/, '').replace(/^描述[：:]\s*/, '');
+        else if (l.match(/提示词|prompt|Prompt/i)) current.prompt += l.replace(/^提示词[：:]\s*/i, '').replace(/^[Pp]rompt[：:]\s*/i, '');
+        else if (!l.match(/^==+/)) {
+          if (!current.desc) current.desc = l;
+          else if (!current.prompt) current.prompt = l;
+        }
+      }
+    }
+    if (current && current.desc && current.prompt) shots.push(current);
+  }
+
+  return shots;
+}
+
+// ==================== AI APIS ====================
 function getEndpoint(model) {
-  const endpoints = {
-    'gpt-4o': 'https://api.openai.com/v1/chat/completions',
-    'grok': 'https://api.x.ai/v1/chat/completions',
-    'deepseek': 'https://api.deepseek.com/v1/chat/completions',
-    'claude': 'https://api.anthropic.com/v1/messages',
-  };
-  return endpoints[model] || endpoints['deepseek'];
+  return { 'gpt-4o': 'https://api.openai.com/v1/chat/completions', 'grok': 'https://api.x.ai/v1/chat/completions', 'deepseek': 'https://api.deepseek.com/v1/chat/completions', 'claude': 'https://api.anthropic.com/v1/messages' }[model] || 'https://api.deepseek.com/v1/chat/completions';
 }
 
 async function callAI(endpoint, apiKey, model, systemPrompt, userContent) {
   if (model === 'claude') {
     const res = await fetch(endpoint, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01'
-      },
-      body: JSON.stringify({
-        model: 'claude-3-sonnet-20241022',
-        max_tokens: 4096,
-        system: systemPrompt,
-        messages: [{ role: 'user', content: userContent }]
-      })
+      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({ model: 'claude-3-sonnet-20241022', max_tokens: 8192, system: systemPrompt, messages: [{ role: 'user', content: userContent }] })
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error?.message || `HTTP ${res.status}`);
     return data.content[0].text;
   } else {
-    let actualModel = model;
-    if (model === 'gpt-4o') actualModel = 'gpt-4o';
-    else if (model === 'deepseek') actualModel = 'deepseek-chat';
-    else if (model === 'grok') actualModel = 'grok-beta';
-
+    let m = { 'gpt-4o': 'gpt-4o', 'deepseek': 'deepseek-chat', 'grok': 'grok-beta' }[model] || model;
     const res = await fetch(endpoint, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model: actualModel,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userContent }
-        ],
-        max_tokens: 4096,
-        temperature: 0.7
-      })
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+      body: JSON.stringify({ model: m, messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: userContent }], max_tokens: 8192, temperature: 0.7 })
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error?.message || `HTTP ${res.status}`);
@@ -565,191 +1064,69 @@ async function callAI(endpoint, apiKey, model, systemPrompt, userContent) {
   }
 }
 
-function parseAIResponse(text) {
-  const scenes = [];
-  const blocks = text.split('===').filter(b => b.trim());
-
-  for (const block of blocks) {
-    const lines = block.trim().split('\n').filter(l => l.trim());
-    let num = scenes.length + 1;
-    let time = `${(scenes.length * 6)}-${(scenes.length + 1) * 6}s`;
-    let desc = '';
-    let prompt = '';
-
-    for (const line of lines) {
-      const l = line.trim();
-      if (l.match(/^分镜\d+/)) {
-        const timeMatch = l.match(/(\d+)[s秒]-(\d+)[s秒]/);
-        if (timeMatch) time = `${timeMatch[1]}-${timeMatch[2]}s`;
-        const numMatch = l.match(/(\d+)/);
-        if (numMatch) num = parseInt(numMatch[1]);
-      } else if (l.startsWith('画面描述') || l.startsWith('画面')) {
-        desc = l.replace(/^画面描述[：:]\s*/, '').replace(/^画面[：:]\s*/, '');
-      } else if (l.startsWith('提示词') || l.startsWith('Prompt') || l.startsWith('prompt')) {
-        prompt = l.replace(/^提示词[：:]\s*/i, '').replace(/^[Pp]rompt[：:]\s*/i, '');
-      }
-    }
-
-    if (desc && prompt) {
-      scenes.push({ num, time, desc, prompt });
-    }
-  }
-
-  // Fallback: if no structured parsing worked, try line-by-line
-  if (scenes.length === 0) {
-    const lines = text.split('\n').filter(l => l.trim());
-    let current = null;
-    for (const line of lines) {
-      const l = line.trim();
-      if (l.match(/^分镜\s*\d+/)) {
-        if (current && current.desc && current.prompt) scenes.push(current);
-        current = { num: scenes.length + 1, time: '', desc: '', prompt: '' };
-        const timeMatch = l.match(/(\d+)[s秒]-(\d+)[s秒]/);
-        if (timeMatch) current.time = `${timeMatch[1]}-${timeMatch[2]}s`;
-        if (!current.time) current.time = `${(scenes.length) * 6}-${(scenes.length + 1) * 6}s`;
-      } else if (current) {
-        if (l.startsWith('画面') || l.startsWith('描述')) {
-          current.desc += l.replace(/^画面[：:]\s*/, '').replace(/^描述[：:]\s*/, '');
-        } else if (l.match(/提示词|prompt|Prompt/i)) {
-          current.prompt += l.replace(/^提示词[：:]\s*/i, '').replace(/^[Pp]rompt[：:]\s*/i, '');
-        } else if (!l.match(/^==+$/) && !l.match(/^\d+[s秒]-\d+[s秒]/)) {
-          if (!current.desc) current.desc = l;
-          else if (!current.prompt) current.prompt = l;
-        }
-      }
-    }
-    if (current && current.desc && current.prompt) scenes.push(current);
-  }
-
-  // Final fallback: split by numbered items
-  if (scenes.length === 0) {
-    const parts = text.split(/\d+[\.、\)]/).filter(p => p.trim());
-    for (let i = 0; i < parts.length && i < 30; i++) {
-      scenes.push({
-        num: i + 1,
-        time: `${i * 6}-${(i + 1) * 6}s`,
-        desc: parts[i].trim().substring(0, 100),
-        prompt: parts[i].trim()
-      });
-    }
-  }
-
-  return scenes;
+// ==================== COPY / UTILITIES ====================
+function copyText(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const text = el.textContent;
+  copyToClipboard(text);
 }
 
-// ==================== Display ====================
-function displayStoryboards(scenes) {
-  const container = document.getElementById('storyboard-list');
-  document.getElementById('result-section').classList.add('active');
-
-  document.getElementById('sb-count').textContent = scenes.length;
-  document.getElementById('sb-duration').textContent = scenes.length * 6 + 's';
-  document.getElementById('sb-words').textContent = document.getElementById('script-input').value.trim().length;
-
-  container.innerHTML = scenes.map((s, i) => `
-    <div class="storyboard-card" style="animation-delay:${i * 0.05}s">
-      <div class="sb-header">
-        <div class="sb-num">${s.num}</div>
-        <div class="sb-time">⏱ ${s.time || `${(i*6)}-${(i+1)*6}s`}</div>
-        <div class="sb-tags">
-          <span class="sb-tag">6秒</span>
-          <span class="sb-tag">${STYLE_NAMES[document.getElementById('style-preset').value]}</span>
-        </div>
-      </div>
-      <div class="sb-desc">🎨 ${s.desc || '画面描述'}</div>
-      <div class="sb-prompt">
-        <div class="sb-prompt-label">🤖 Prompt</div>
-        <button class="copy-btn" onclick="copyPrompt(this, ${i})">复制</button>
-        <div>${s.prompt || '提示词'}</div>
-      </div>
-    </div>
-  `).join('');
-
-  // Scroll to result
-  document.getElementById('result-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-
-function copyPrompt(btn, index) {
-  const scenes = getCurrentScenes();
-  if (!scenes || !scenes[index]) return;
-  const text = scenes[index].prompt;
-  navigator.clipboard.writeText(text).then(() => {
-    btn.textContent = '✅ 已复制';
-    setTimeout(() => { btn.textContent = '复制'; }, 2000);
-  }).catch(() => {
-    // Fallback
-    const ta = document.createElement('textarea');
-    ta.value = text;
-    document.body.appendChild(ta);
-    ta.select();
-    document.execCommand('copy');
-    document.body.removeChild(ta);
-    btn.textContent = '✅ 已复制';
-    setTimeout(() => { btn.textContent = '复制'; }, 2000);
-  });
-}
-
-function getCurrentScenes() {
-  const cards = document.querySelectorAll('.storyboard-card');
-  const scenes = [];
-  cards.forEach(card => {
-    const numText = card.querySelector('.sb-num')?.textContent || '0';
-    const timeText = card.querySelector('.sb-time')?.textContent?.replace('⏱ ', '') || '';
-    const descText = card.querySelector('.sb-desc')?.textContent?.replace('🎨 ', '') || '';
-    const promptText = card.querySelector('.sb-prompt > div:last-child')?.textContent || '';
-    scenes.push({
-      num: parseInt(numText),
-      time: timeText,
-      desc: descText,
-      prompt: promptText
-    });
-  });
-  return scenes;
-}
-
-function copyAll() {
-  const scenes = getCurrentScenes();
-  if (scenes.length === 0) {
-    showToast('没有可复制的内容', 'error');
-    return;
-  }
-  const style = STYLE_NAMES[document.getElementById('style-preset').value];
-  let text = `=== 一抹金蓝 · 短剧分镜工厂 ===\n`;
-  text += `风格：${style}\n`;
-  text += `总时长：${scenes.length * 6}s (${scenes.length}镜)\n\n`;
-  scenes.forEach((s, i) => {
-    text += `【分镜${s.num || i+1}】${s.time || `${i*6}-${(i+1)*6}s`}\n`;
+function copyAllShots(idx) {
+  const shots = episodes[idx]?.storyboards;
+  if (!shots || !shots.length) return;
+  let text = `=== ${episodes[idx].title} 分镜 ===\n`;
+  shots.forEach((s, i) => {
+    text += `分镜${i+1} | ${s.time}\n`;
+    if (s.shotType) text += `景别：${s.shotType}\n`;
+    if (s.movement) text += `运镜：${s.movement}\n`;
     text += `画面：${s.desc}\n`;
     text += `Prompt：${s.prompt}\n\n`;
   });
+  copyToClipboard(text);
+}
 
-  navigator.clipboard.writeText(text).then(() => {
-    showToast(`✅ 已复制 ${scenes.length} 个分镜`);
-  }).catch(() => {
+function copySinglePrompt(idx, shotIdx) {
+  const shot = episodes[idx]?.storyboards?.[shotIdx];
+  if (!shot) return;
+  copyToClipboard(shot.prompt);
+}
+
+function copyToClipboard(text) {
+  navigator.clipboard.writeText(text).then(() => showToast('✅ 已复制')).catch(() => {
     const ta = document.createElement('textarea');
-    ta.value = text;
-    document.body.appendChild(ta);
-    ta.select();
-    document.execCommand('copy');
-    document.body.removeChild(ta);
-    showToast(`✅ 已复制 ${scenes.length} 个分镜`);
+    ta.value = text; document.body.appendChild(ta);
+    ta.select(); document.execCommand('copy');
+    document.body.removeChild(ta); showToast('✅ 已复制');
   });
 }
 
-function clearAll() {
-  if (!confirm('确认清空？历史记录不受影响。')) return;
-  document.getElementById('script-input').value = '';
-  document.getElementById('storyboard-list').innerHTML = '';
-  document.getElementById('result-section').classList.remove('active');
-  document.getElementById('char-count').textContent = '0';
+function escHtml(str) {
+  if (!str) return '';
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-// ==================== Char Counter ====================
+// ==================== SUMMARY ====================
+function updateSummary() {
+  document.getElementById('sb-count').textContent = episodes.length;
+  let totalDuration = 0;
+  let totalShots = 0;
+  for (const ep of episodes) {
+    if (ep.storyboards) {
+      totalShots += ep.storyboards.length;
+      totalDuration += ep.storyboards.reduce((sum, s) => sum + (s.duration || 6), 0);
+    }
+  }
+  document.getElementById('sb-total-duration').textContent = totalDuration + 's';
+  document.getElementById('sb-total-shots').textContent = totalShots;
+}
+
+// ==================== CHAR COUNTER ====================
 document.getElementById('script-input').addEventListener('input', function() {
   document.getElementById('char-count').textContent = this.value.length;
 });
 
-// ==================== Init ====================
+// ==================== INIT ====================
 loadAPIKey();
 </script>
 </body>
