@@ -1026,7 +1026,7 @@ function renderPhaseStoryboard(idx) {
       <div class="config-group">
         <label>分镜时长 ${modeLabel}</label>
         <div class="duration-grid" id="duration-grid">
-          ${durOpts.map(d => `<span class="dur-opt ${(ep.durationMode || 'auto') === d.val ? 'active' : ''}" onclick="setShotDuration(${idx}, '${d.val}')">${d.label}</span>`).join('')}
+          ${durOpts.map(d => `<span class="dur-opt ${(ep.durationMode || 'auto') === d.val ? 'active' : ''}" data-val="${d.val}" onclick="setShotDuration(${idx}, '${d.val}')">${d.label}</span>`).join('')}
         </div>
       </div>
     </div>
@@ -1041,8 +1041,8 @@ function renderPhaseStoryboard(idx) {
 
 function setShotDuration(idx, mode) {
   episodes[idx].durationMode = mode;
-  const grid = document.getElementById('duration-grid');
-  if (grid) grid.querySelectorAll('.dur-opt').forEach(el => el.classList.toggle('active', el.dataset.val === mode));
+  showEpisode(currentEpisodeIdx);
+  showToast('⏱ 已切换为' + ({'auto':'🎯自动匹配','3':'3秒','5':'5秒','10':'10秒','15':'15秒'}[mode] || mode));
 }
 
 // ==================== STORYBOARD GENERATION ====================
@@ -1069,16 +1069,16 @@ async function generateStoryboard(idx) {
   // Mode-specific instruction
   let modeInstruction;
   if (isNarrative) {
-    modeInstruction = `【解说漫模式】
-1. **剧本原文绝对不改一字** — 每个分镜必须引用对应的原文段落
-2. 每个分镜显示「🎙️ 对应原文」标记
-3. 旁白解说：原文中的旁白/叙述部分用解说语气，角色对话标注角色名+语气
-4. 每个分镜的提示词要包含对话内容旁白文字`;
+    modeInstruction = `【解说漫模式 — 这是铁律】
+⚡ 铁律1：剧本原文绝对不改一字，不改句式，不改语气。只能直接引用。
+⚡ 铁律2：每个分镜必须标注「对应原文：」标签，且原文内容必须直接从上面「剧本内容」中逐字复制，不允许AI自由概括或改写。
+⚡ 铁律3：每句旁白/解说用解说语气描述。角色对话必须保留在原句中，不增不减。
+⚡ 铁律4：每句对话的提示词（中文）必须包含角色名+语气+原话。例如：「王婷（不耐烦地）说：又在摸鱼？老板找你。」`;
   } else {
     modeInstruction = `【分镜模式】
-1. 每个分镜的画面描述和提示词要包含角色台词/对话内容（对口型用）
+1. 每个分镜的画面描述和提示词必须包含角色台词/对话内容（对口型用），台词从剧本中直接引用不改
 2. 角色对话标注为【角色名】（语气）台词
-3. 提示词中包含旁白解说文字`;
+3. 提示词中包含旁白解说文字，从剧本中逐字引用`;
   }
 
   const prompt = `你是一位AI视频分镜导演。基于以下完整设定，生成连续的分镜。
@@ -1094,16 +1094,15 @@ ${ep.rawContent}
 
 ${modeInstruction}
 
-要求：
-1. 每个分镜包含：编号、时长、景别、运镜、画面描述（中文）、${
-    isNarrative ? '对应原文、' : '角色对话、'}提示词（中文+英文）
+要求（必须逐条遵守）：
+1. 每个分镜包含：编号、时长、景别、运镜、画面描述（中文）、${isNarrative ? '对应原文、' : '角色对话（角色名+语气+原话）、'}提示词（中文）、提示词（English）
 2. ${durInstruction}
 3. 分镜之间必须完美衔接（角色位置、视线、动作逻辑连贯）
 4. **长对话/多人对话场景必须切换镜头视角**，使用过肩/反打/正反打，禁止同一机位持续超过10秒
-5. 提示词（中文）详细描述：景别、镜头运动、人物外貌动作、光影氛围、环境细节
-6. 提示词（英文）不少于150个英文单词
-7. 每个分镜的提示词必须包含当前画面中角色说的台词内容（标注角色名和语气）
-${isNarrative ? '8. 每个分镜标注对应的原文段落' : ''}
+5. 提示词（中文）必须详细描述：景别、镜头运动、人物外貌动作、光影氛围、环境细节，且**必须包含当前画面中的台词原话**（角色名+语气+台词，从剧本逐字引用）
+6. 提示词（English）不少于150个英文单词，也必须包含台词翻译
+${isNarrative ? '7. 每个分镜必须标注「对应原文：」后接剧本原文段落，原文必须逐字复制不得修改
+8. 提示词（中文）中必须包含原文中的旁白或对话内容，角色对话标注【角色名】（语气）' : '7. 每个分镜提示词（中文）必须包含角色台词原话，标注【角色名】（语气）'}
 
 输出格式（严格按此格式）：
 ===
@@ -1155,8 +1154,13 @@ async function callAIAndShow(idx, prompt, field, successMsg, phaseId) {
   if (loadingBar) loadingBar.classList.add('active');
 
   try {
-    const systemPrompt = `你是一位专业的短剧创作AI助手。
-严格按照输出格式要求返回纯文本结果。不要使用markdown格式。
+    const systemPrompt = `你是一位AI视频分镜导演。
+
+核心约束（必须遵守）：
+1. 剧本原文绝对不改 — 解说漫模式下的原文必须逐字复制
+2. 每个分镜的提示词（中文）必须包含角色台词内容（角色名+语气+原话）
+3. 长对话必须切换镜头视角（过肩/反打/正反打），禁止同一机位持续超过10秒
+4. 严格按照输出格式返回纯文本结果，不要使用markdown格式
 
 风格要求：${STYLE_PROMPTS[style]}`;
 
